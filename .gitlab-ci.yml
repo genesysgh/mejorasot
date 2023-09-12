@@ -1,0 +1,35 @@
+variables:
+  SONAR_KEY: 'CHILEXPRESS_MEJORAS_OT'
+  SONAR_LOGIN: 'c210ffb0019707d9903d1890e0d7bd1996195548'
+  SOLUTION_PATH: './'
+  SOLUTION_NAME: 'App.Chilexpress.MejorasOT.sln'
+ 
+ 
+stages:
+    - restore
+    - sonar
+    
+common_restore:
+    stage: restore
+    script:
+        - echo "Nuget restore common"
+        - cd $CI_PROJECT_DIR
+        - cd $env:SOLUTION_PATH
+        - msbuild -t:restore $env:SOLUTION_NAME
+        - nuget restore $env:SOLUTION_NAME
+        - msbuild /t:build $env:SOLUTION_NAME
+
+ejecutar_sonar:
+    stage: sonar
+    script:
+        - echo "SONAR"
+        - cd $CI_PROJECT_DIR
+        - cd $env:SOLUTION_PATH
+        - SonarScanner.MSBuild.exe begin /k:$env:SONAR_KEY /d:sonar.host.url="http://sonar.genesys.cl" /d:sonar.login=$env:SONAR_LOGIN
+        - msbuild -t:Restore $env:SOLUTION_NAME
+        - nuget restore $env:SOLUTION_NAME
+        - msbuild /t:Rebuild $env:SOLUTION_NAME
+        - SonarScanner.MSBuild.exe end /d:sonar.login=$env:SONAR_LOGIN
+    only:
+        refs:
+            - develop
